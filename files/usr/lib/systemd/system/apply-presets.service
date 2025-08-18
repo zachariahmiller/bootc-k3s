@@ -1,0 +1,10 @@
+[Unit]
+Description=Apply systemd presets once
+ConditionPathExists=!/var/lib/.presets-applied
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl preset-all
+ExecStart=/usr/bin/touch /var/lib/.presets-applied
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target

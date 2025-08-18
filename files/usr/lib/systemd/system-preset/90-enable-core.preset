@@ -1,0 +1,25 @@
+enable sshd.service
+enable systemd-networkd.service
+enable systemd-resolved.service
+enable systemd-timesyncd.service
+enable cockpit.socket
+
+# ZFS core units
+enable zfs-import-scan.service
+enable zfs-mount.service
+enable zfs-share.service
+
+# First-boot helpers
+enable apply-presets.service
+enable mask-units.service
+enable zfs-autopool.service
+enable k3s-bootstrap.service
+
+# NVIDIA containerd runtime config (no-op if toolkit absent)
+enable nvidia-containerd-config.service
+
+# cloud-init
+enable cloud-init-local.service
+enable cloud-init.service
+enable cloud-config.service
+enable cloud-final.service

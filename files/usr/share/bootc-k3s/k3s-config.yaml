@@ -1,0 +1,5 @@
+kubelet-arg:
+  - "volume-plugin-dir=/var/lib/kubelet/volumeplugins"
+# disable:
+#  - traefik
+# write-kubeconfig-mode: "0644"

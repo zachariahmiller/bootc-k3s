@@ -1,4 +1,4 @@
-# image-template
+# bootc-k3s
 
 This repository is meant to be a template for building your own custom [bootc](https://github.com/bootc-dev/bootc) image. This template is the recommended way to make customizations to any image published by the Universal Blue Project.
 
@@ -173,7 +173,7 @@ To use it, you must have installed [just](https://just.systems/man/en/introducti
 
 ## Environment Variables
 
-- `image_name`: The name of the image (default: "image-template").
+- `image_name`: The name of the image (default: "bootc-k3s").
 - `default_tag`: The default tag for the image (default: "latest").
 - `bib_image`: The Bootc Image Builder (BIB) image (default: "quay.io/centos-bootc/bootc-image-builder:latest").
 

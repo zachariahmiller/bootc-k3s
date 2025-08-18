@@ -1,0 +1,12 @@
+[Unit]
+Description=Configure NVIDIA containerd runtime (first boot)
+ConditionPathExists=!/var/lib/.nvidia-ctk-done
+After=containerd.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/sh -c 'if command -v nvidia-ctk >/dev/null 2>&1; then nvidia-ctk runtime configure --runtime=containerd || true; fi'
+ExecStart=/usr/bin/systemctl restart containerd || true
+ExecStart=/usr/bin/touch /var/lib/.nvidia-ctk-done
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target

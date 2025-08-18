@@ -1,0 +1,13 @@
+[Unit]
+Description=Mask unwanted services once
+After=apply-presets.service
+ConditionPathExists=!/var/lib/.units-masked
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c '\
+  for u in avahi-daemon.service cups.service rpcbind.service nfs-server.service; do \
+    ln -sf /dev/null /etc/systemd/system/$u; done; systemctl daemon-reload'
+ExecStart=/usr/bin/touch /var/lib/.units-masked
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=Initial k3s bootstrap (first boot)
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=!/var/lib/rancher/k3s/server/node-token
+[Service]
+Type=oneshot
+Environment=INSTALL_K3S_CHANNEL=stable
+Environment=INSTALL_K3S_SKIP_SELINUX_RPM=true
+ExecStart=/usr/libexec/k3s-bootstrap.sh
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target

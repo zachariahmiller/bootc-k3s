@@ -1,0 +1,12 @@
+[Unit]
+Description=ZFS: One-time auto pool create/import/mount
+Wants=zfs-import-scan.service
+After=zfs-import-scan.service
+ConditionPathExists=!/var/lib/.zfs-autopool-done
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/zfs-autopool.sh
+ExecStart=/usr/bin/touch /var/lib/.zfs-autopool-done
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target

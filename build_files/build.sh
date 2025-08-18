@@ -1,24 +1,59 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-set -ouex pipefail
+# Make installs leaner
+echo 'tsflags=nodocs' | tee -a /etc/dnf/dnf.conf >/dev/null
 
-### Install packages
+# Ensure dnf5 exists (Fedora 41+ has it; link fallback for older)
+command -v dnf5 >/dev/null 2>&1 || ln -sf /usr/bin/dnf /usr/bin/dnf5
 
-# Packages can be installed from any enabled yum repo on the image.
-# RPMfusion repos are available by default in ublue main images
-# List of rpmfusion packages can be found here:
-# https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/39/x86_64/repoview/index.html&protocol=https&redirect=1
+# Core packages (many already present in fedora-bootc; harmless if already installed)
+dnf5 -y --setopt=install_weak_deps=False install \
+  kernel-core kernel-modules systemd dracut openssh-server \
+  policycoreutils selinux-policy-targeted coreutils util-linux \
+  systemd-networkd systemd-resolved systemd-udev \
+  nfs-utils iproute iptables ipset conntrack-tools ethtool \
+  cockpit cockpit-storaged \
+  cloud-init cloud-utils-growpart gdisk \
+  jq curl shadow-utils || true
 
-# this installs a package from fedora repos
-dnf5 install -y tmux 
+# NVIDIA repos (driver + container toolkit) — best effort on both arches
+cat >/etc/yum.repos.d/negativo17-nvidia.repo <<'R'
+[nvidia]
+name=negativo17 - NVIDIA
+baseurl=https://negativo17.org/repos/nvidia/fedora-$releasever/$basearch/
+enabled=1
+gpgcheck=1
+gpgkey=https://negativo17.org/repos/RPM-GPG-KEY-negativo17
+R
 
-# Use a COPR Example:
-#
-# dnf5 -y copr enable ublue-os/staging
-# dnf5 -y install package
-# Disable COPRs so they don't end up enabled on the final image:
-# dnf5 -y copr disable ublue-os/staging
+cat >/etc/yum.repos.d/nvidia-container-toolkit.repo <<'R'
+[nvidia-container-toolkit]
+name=NVIDIA Container Toolkit
+baseurl=https://nvidia.github.io/libnvidia-container/stable/fedora/$releasever/$basearch
+enabled=1
+gpgcheck=1
+gpgkey=https://nvidia.github.io/libnvidia-container/gpgkey
+R
 
-#### Example for enabling a System Unit File
+if ! dnf5 -y --setopt=install_weak_deps=False install \
+      nvidia-driver-cuda nvidia-container-toolkit nvidia-container-toolkit-selinux; then
+  echo "WARN: NVIDIA packages not available for this Fedora/arch right now; continuing"
+fi
 
-systemctl enable podman.socket
+# OpenZFS repo + packages (best effort on both arches)
+if dnf5 -y --setopt=install_weak_deps=False install \
+     "https://zfsonlinux.org/fedora/zfs-release-2-8$(rpm --eval '%{dist}').noarch.rpm"; then
+  if ! dnf5 -y --setopt=install_weak_deps=False install zfs zfs-dracut; then
+    echo "WARN: ZFS packages not currently available for this kernel/arch; continuing"
+  fi
+else
+  echo "WARN: Could not install zfs-release repo RPM; continuing"
+fi
+
+# Don’t let rpm-ostreed manage updates on bootc systems
+systemctl disable rpm-ostreed.service rpm-ostreed-automatic.timer || true
+
+# Clean caches
+dnf5 clean all || true
+rm -rf /var/cache/dnf/* /var/lib/dnf/* || true

@@ -1,0 +1,7 @@
+disable firewalld.service
+disable avahi-daemon.service
+disable cups.service cups.socket
+disable rsyslog.service
+disable dnf-makecache.timer
+disable rpm-ostreed-automatic.timer
+disable fstrim.timer

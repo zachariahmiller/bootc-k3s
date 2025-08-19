@@ -18,6 +18,7 @@ FROM quay.io/fedora/fedora-bootc:42
 ### MODIFICATIONS
 ## make modifications desired in your image and install packages by modifying the build.sh script
 ## the following RUN directive does all the things required to run "build.sh" as recommended.
+COPY files/ /
 
 COPY files/ /
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \

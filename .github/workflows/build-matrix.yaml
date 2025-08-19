@@ -27,8 +27,12 @@ concurrency:
 
 jobs:
   build_push:
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: ["ubuntu-24.04-arm","ubuntu-24.04"]
     name: Build and push image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runs-on }}
 
     permissions:
       contents: read

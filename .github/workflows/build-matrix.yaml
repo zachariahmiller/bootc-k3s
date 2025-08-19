@@ -126,7 +126,7 @@ jobs:
       - name: Check manifest
         run: |
           set -x
-          buildah manifest inspect ${{ steps.build_image_multiarch.outputs.image }}:${{ env.IMAGE_TAG }}
+          buildah manifest inspect ${{ steps.build_image.outputs.image }}:${{ env.IMAGE_TAG }}
           
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
       # This does not make your image faster to download, just provides better resumability and fixes a few errors.

@@ -22,13 +22,17 @@ env:
   DEFAULT_TAG: "latest"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ inputs.brand_name}}-${{ inputs.stream_name }}
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ inputs.brand_name}}-${{ inputs.stream_name }}-matrix
   cancel-in-progress: true
 
 jobs:
   build_push:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: ["amd64", "arm64"]
     name: Build and push image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.arch == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
 
     permissions:
       contents: read
@@ -48,6 +52,7 @@ jobs:
 
       # This is optional, but if you see that your builds are way too big for the runners, you can enable this by uncommenting the following lines:
       - name: Maximize build space
+        if: matrix.arch != 'arm64'
         uses: ublue-os/remove-unwanted-software@517622d6452028f266b7ba4cc9a123b5f58a6b53 # v7
         with:
           remove-codeql: true
@@ -80,6 +85,7 @@ jobs:
           tags: |
             type=raw,value=${{ env.DEFAULT_TAG }}
             type=raw,value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
+            type=raw,value=${{ env.DEFAULT_TAG }}-${{ matrix.arch }}
             type=raw,value={{date 'YYYYMMDD'}}
             type=sha,enable=${{ github.event_name == 'pull_request' }}
             type=ref,event=pr
@@ -111,7 +117,6 @@ jobs:
           # Postfix image name with -custom to make it a little more descriptive
           # Syntax: https://docs.github.com/en/actions/learn-github-actions/expressions#format
           image: ${{ env.IMAGE_NAME }}
-          platforms: linux/amd64, linux/arm64
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
@@ -119,10 +124,10 @@ jobs:
       - name: Check images created
         run: buildah images | grep '${{ env.IMAGE_NAME }}'
 
-      - name: Check manifest
-        run: |
-          set -x
-          buildah manifest inspect ${{ steps.build_image_multiarch.outputs.image }}:${{ env.IMAGE_TAG }}
+      # - name: Check manifest
+      #   run: |
+      #     set -x
+      #     buildah manifest inspect localhost/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}-${{ matrix.arch }}
           
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
       # This does not make your image faster to download, just provides better resumability and fixes a few errors.
